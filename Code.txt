@@ -1,0 +1,78 @@
+import pygame
+import math
+import random
+
+# Constants
+WIDTH, HEIGHT = 800, 600
+NUM_CIRCLES = 5
+CIRCLE_RADIUS = 20
+AVOID_RADIUS = 100
+SPEED = 2
+
+# Circle class
+class Circle:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.velocity_x = random.choice([-SPEED, SPEED])
+        self.velocity_y = random.choice([-SPEED, SPEED])
+
+    def move(self):
+        self.x += self.velocity_x
+        self.y += self.velocity_y
+
+        # Bounce off walls
+        if self.x <= CIRCLE_RADIUS or self.x >= WIDTH - CIRCLE_RADIUS:
+            self.velocity_x = -self.velocity_x
+        if self.y <= CIRCLE_RADIUS or self.y >= HEIGHT - CIRCLE_RADIUS:
+            self.velocity_y = -self.velocity_y
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, (0, 255, 0), (int(self.x), int(self.y)), CIRCLE_RADIUS)
+
+    def avoid(self, other):
+        if self.distance(other) < AVOID_RADIUS:
+            # Simple avoidance behavior
+            dx = self.x - other.x
+            dy = self.y - other.y
+            distance = math.sqrt(dx**2 + dy**2)
+            if distance != 0:
+                avoidance_x = (dx / distance) * SPEED
+                avoidance_y = (dy / distance) * SPEED
+                self.x += avoidance_x
+                self.y += avoidance_y
+
+    def distance(self, other):
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
+# Initialize Pygame
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Collision Detection and Avoidance System")
+clock = pygame.time.Clock()
+
+# Create circles
+circles = [Circle(random.randint(CIRCLE_RADIUS, WIDTH - CIRCLE_RADIUS),
+                  random.randint(CIRCLE_RADIUS, HEIGHT - CIRCLE_RADIUS)) for _ in range(NUM_CIRCLES)]
+
+# Main loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    screen.fill((0, 0, 0))
+
+    # Move and draw circles
+    for circle in circles:
+        circle.move()
+        for other in circles:
+            if circle != other:
+                circle.avoid(other)
+        circle.draw(screen)
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
